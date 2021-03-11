@@ -1,0 +1,69 @@
+version: '3'
+services:
+
+  #PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: joshaucy0218/image-test #joshaucy0218/imageTest
+    ports:
+      - "8000:8000"
+    container_name: app
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  #Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "81:81"
+      - "443:443"
+    volumes:
+      - ./:/var/www
+      - /Users/nkg/Desktop/LaraDock-project/laradock/nginx/conf.d/:/etc/nginx/conf.d/
+      - /Users/nkg/Desktop/LaraDock-project/laradock/nginx/sites/:/etc/nginx/sites/
+    networks:
+      - app-network
+
+  #MySQL Service
+  db:
+    image: mariadb:10.4.1
+    container_name: mariadb
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: default
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_USER: default
+      MYSQL_PASSWORD: secret
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mariadb
+    volumes:
+      - dbdata:/var/lib/mysql/
+      - /Users/nkg/Desktop/LaraDock-project/laradock/mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - app-network
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+#Volumes
+volumes:
+  dbdata:
+    driver: local
